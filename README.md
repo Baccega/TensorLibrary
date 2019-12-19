@@ -4,6 +4,12 @@ Arnaldo Santoro (822274)
 
 Due date: 23/12/2019
 
+# TODO:
+
+- Finire Docs
+- Cambiare interfaccia (a.ein("i") => a("i"))
+- Migliorare i controlli a compile time?
+
 ## REQUIREMENT SPECIFICATION
 
 ### Assignment 2: Einstein's notation
@@ -24,15 +30,9 @@ Tr(a) = a_ii
 
 as well as additions (subtractions) and multiplications.
 
-
-
 The operations should work with dynamically ranked tensors as well as fixed-rank tensors by maintaining and checking as much static information as possible.
 
-
-
 **Hint**: define index types. indexing operations with index types should return proxy objects that allow deferred operations and conversion to the correct tensor type.
-
-
 
 ## USAGE
 
@@ -48,13 +48,11 @@ The operations should work with dynamically ranked tensors as well as fixed-rank
 
 #### Generalized Kronecker Product
 
-The operation OP between two tensors A and B or rank r and s with no common indexes returns a tensor of rank r*s whose ranks' elements are the result of OP between each element of A and each element of the rank of B .
+The operation OP between two tensors A and B or rank r and s with no common indexes returns a tensor of rank r\*s whose ranks' elements are the result of OP between each element of A and each element of the rank of B .
 
 This results similar to a Kronecker product which stores the results in different ranks of a tensor.
 
 If there wasn't a bug in the flatten operation one could easily implement a Kronecker product exploiting this functionality.
-
-
 
 ## DESIGN
 
@@ -71,8 +69,6 @@ A definition of the _strategy pattern_ is a reusable solution that lets an algor
 The object `tensor_op` is forward-declared and consists of the _functor_ applying the algorithm.
 
 The following `struct`s are "functors" (in a broader sense) implementing the operations between two elements of type T, which are then placed in the specialized template of the definition for the `operator+`, and `operator*` respectively.
-
-
 
 ## Bugs
 

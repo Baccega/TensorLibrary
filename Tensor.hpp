@@ -618,10 +618,7 @@ class tensor_op {
 template <typename T>
 class tensor<T, dynamic> {
  public:
-  reserved::tensor_constant<T> ein(const std::string &indices) {
-    return reserved::tensor_constant<T>(
-        *this, std::vector<char>(indices.begin(), indices.end()));
-  }
+  
 
   // C-style constructor with explicit rank and pointer to array of dimensions
   // all other constructors are redirected to this one
@@ -669,6 +666,11 @@ class tensor<T, dynamic> {
 
   // rank accessor
   size_t get_rank() const { return width.size(); }
+
+  reserved::tensor_constant<T> operator[](const std::string &indices) {
+    return reserved::tensor_constant<T>(
+        *this, std::vector<char>(indices.begin(), indices.end()));
+  }
 
   // direct accessors. Similarly to std::vector, operator () does not perform
   // range check while at() does

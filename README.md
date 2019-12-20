@@ -7,7 +7,8 @@ Due date: 23/12/2019
 # TODO:
 
 - Finire Docs
-- Cambiare interfaccia (a.ein("i") => a("i"))
+- Docs: usare sintassi latex
+- Controllare che il namespace di tensor_constant sia quello corretto
 - Creare i controlli a compile time per tensori con informazione statica
 
 ## REQUIREMENT SPECIFICATION
@@ -38,7 +39,32 @@ The operations should work with dynamically ranked tensors as well as fixed-rank
 
 ### Examples
 
+With this library you can represent a tensor in the Einstein notation with the following syntax:
+
+Tensor a_ij -> `a["ij"]`
+
+Where:
+
+- `a` is the tensor
+- `"ij"` are the selected indexes
+
+This will return a `tensor_constant` type, that can be evaluated into a Tensor or a value using the `evaluate()` method in the following way:
+
+```c++
+auto exp = a["i"] + b["i"];
+
+tensor::tensor<int> c = exp.evaluate();
+```
+
 #### Trace
+
+You can calculate the tensor's trace in the traditional Einstein notation way:
+
+```c++
+auto exp = a["ii"];
+
+int c = exp.evaluate();
+```
 
 #### Multiplication
 

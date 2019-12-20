@@ -56,7 +56,7 @@ void tensorMultiplicationTests() {
 
   fill_tensor_i(b, 0);
 
-  auto exp = a.ein("ijk") * b.ein("j");
+  auto exp = a["ijk"] * b["j"];
 
   tensor::tensor<int> c = exp.evaluate();
 
@@ -78,7 +78,7 @@ void tensorMultiplicationTests() {
 
   fill_tensor_i(b1, 0);
 
-  auto exp2 = a1.ein("i") * b1.ein("i");
+  auto exp2 = a1["i"] * b1["i"];
 
   tensor::tensor<int> c1 = exp2.evaluate();
 
@@ -100,7 +100,7 @@ void tensorMultiplicationTests() {
 
   fill_tensor_i(c2, 0);
 
-  auto exp3 = a2.ein("ij") * b2.ein("ik");
+  auto exp3 = a2["ij"] * b2["ik"];
 
   tensor::tensor<int> d2 = exp3.evaluate();
 
@@ -114,7 +114,7 @@ void sameTensorMultiplicationTests() {
 
   fill_tensor_i(a, 0);
 
-  auto exp = a.ein("i") * a.ein("i");
+  auto exp = a["i"] * a["i"];
 
   tensor::tensor<int> c = exp.evaluate();
 
@@ -126,7 +126,7 @@ void sameTensorMultiplicationTests() {
 
   fill_tensor_i(d, 0);
 
-  auto exp2 = d.ein("ij") * d.ein("ij");
+  auto exp2 = d["ij"] * d["ij"];
 
   tensor::tensor<int> e = exp2.evaluate();
 
@@ -144,7 +144,7 @@ void traceTests() {
 
   fill_tensor_i(f, 0);
 
-  auto exp3 = f.ein("ii");
+  auto exp3 = f["ii"];
 
   tensor::tensor<int> g = exp3.evaluate();
 
@@ -156,7 +156,7 @@ void traceTests() {
 
   fill_tensor_i(h, 0);
 
-  auto exp4 = h.ein("iii");
+  auto exp4 = h["iii"];
 
   tensor::tensor<int> i = exp4.evaluate();
 
@@ -178,7 +178,7 @@ void tensorAdditionTests() {
 
   fill_tensor_i(b, 0);
 
-  auto exp = a.ein("i") + b.ein("i");
+  auto exp = a["i"] + b["i"];
 
   tensor::tensor<int> c = exp.evaluate();
 
@@ -194,7 +194,7 @@ void tensorAdditionTests() {
 
   fill_tensor_i(b1, 0);
 
-  auto exp1 = a1.ein("ijk") + b1.ein("ijk");
+  auto exp1 = a1["ijk"] + b1["ijk"];
 
   tensor::tensor<int> c1 = exp1.evaluate();
 
@@ -220,7 +220,7 @@ void operationConcatTests() {
 
   fill_tensor_i(c, 0);
 
-  auto exp = a.ein("ij") * b.ein("ik") * c.ein("j");
+  auto exp = a["ij"] * b["ik"] * c["j"];
 
   tensor::tensor<int> d = exp.evaluate();
 
@@ -238,7 +238,7 @@ void operationConcatTests() {
 
   // fill_tensor_i(c, 0);
 
-  // auto exp = a.ein("i") * b.ein("i") * c.ein("i");
+  // auto exp = a["i"] * b["i"] * c["i"];
 
   // tensor::tensor<int> d = exp.evaluate();
 
@@ -254,7 +254,7 @@ void operationConcatTests() {
 
   // fill_tensor_i(b1, 0);
 
-  // auto exp1 = a1.ein("ijk") + b1.ein("ijk");
+  // auto exp1 = a1["ijk"] + b1["ijk"];
 
   // tensor::tensor<int> c1 = exp1.evaluate();
 
@@ -280,7 +280,7 @@ void mixedConcatTests() {
 
   fill_tensor_c(c, 1000);
 
-  auto exp = a.ein("ij") * b.ein("jk") + c.ein("kl");
+  auto exp = a["ij"] * b["jk"] + c["kl"];
 
   tensor::tensor<int> d = exp.evaluate();
 
@@ -300,7 +300,7 @@ void tensorConcatenation() {
 
   fill_tensor_i(b, 0, 100);
 
-  auto exp = a.ein("i") + b.ein("j");
+  auto exp = a["i"] + b["j"];
 
   tensor::tensor<int> d = exp.evaluate();
 
@@ -333,7 +333,7 @@ void KroneckerProduct() {
 
   b(1, 1) = 1;
 
-  auto exp = a.ein("ij") * b.ein("kl");
+  auto exp = a["ij"] * b["kl"];
 
   tensor::tensor<int> d = exp.evaluate();  //.flatten(0,2);
 
@@ -365,7 +365,7 @@ void numberOfIndexesCheck() {
 
   fill_tensor_i(b, 0);
 
-  auto exp = a.ein("ij") * b.ein("jk");
+  auto exp = a["ij"] * b["jk"];
 
   tensor::tensor<int> d = exp.evaluate();
 
@@ -385,7 +385,7 @@ void invalidTrace() {
 
   fill_tensor_i(a, 0);
 
-  auto exp = a.ein("ii");
+  auto exp = a["ii"];
 
   auto d = exp.evaluate();
 
@@ -407,7 +407,7 @@ void breaksComputation() {
 
   fill_tensor_i(b, 0);
 
-  auto exp2 = a.ein("ij") * b.ein("jk");
+  auto exp2 = a["ij"] * b["jk"];
 
   auto d = exp2.evaluate();
 
@@ -425,9 +425,9 @@ void breaksComputation() {
 
   fill_tensor_i(a, 0);
 
-  fill_tensor_i(b, 0);
+  fill_tensor_i(b, 0); 
 
-  auto exp3 = a.ein("ii") + b.ein("ij");
+  auto exp3 = a["ii"] + b["ij"];
 
   auto res = exp3.evaluate();
 

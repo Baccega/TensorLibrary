@@ -8,7 +8,7 @@ Due date: 23/12/2019
 
 - Finire Docs
 - Cambiare interfaccia (a.ein("i") => a("i"))
-- Migliorare i controlli a compile time?
+- Creare i controlli a compile time per tensori con informazione statica
 
 ## REQUIREMENT SPECIFICATION
 

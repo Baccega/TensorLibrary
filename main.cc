@@ -8,12 +8,8 @@
 // fills tensor with index values
 template <typename T>
 
-void fill_tensor_i(T &tensor, int i = 0, int m = 1)
-{
-
-  for (auto it = tensor.begin(); it != tensor.end(); ++it)
-  {
-
+void fill_tensor_i(T &tensor, int i = 0, int m = 1) {
+  for (auto it = tensor.begin(); it != tensor.end(); ++it) {
     *it = i * m;
 
     i++;
@@ -23,23 +19,15 @@ void fill_tensor_i(T &tensor, int i = 0, int m = 1)
 // fills tensor with a constant c
 template <typename T>
 
-void fill_tensor_c(T &tensor, int c = 1)
-{
-
-  for (auto it = tensor.begin(); it != tensor.end(); ++it)
-  {
-
+void fill_tensor_c(T &tensor, int c = 1) {
+  for (auto it = tensor.begin(); it != tensor.end(); ++it) {
     *it = c;
   }
 }
 
 template <class TensorType>
-void printTensor(const TensorType &t, std::ostream &stream = std::cout)
-{
-
-  for (auto iterator = t.begin(); iterator != t.end(); iterator++)
-  {
-
+void printTensor(const TensorType &t, std::ostream &stream = std::cout) {
+  for (auto iterator = t.begin(); iterator != t.end(); iterator++) {
     stream << *iterator << ", ";
   }
 
@@ -47,9 +35,7 @@ void printTensor(const TensorType &t, std::ostream &stream = std::cout)
 }
 
 template <class TensorType>
-void assertTensorValues(const TensorType &tensor, std::string expected)
-{
-
+void assertTensorValues(const TensorType &tensor, std::string expected) {
   std::stringstream buffer;
 
   printTensor(tensor, buffer);
@@ -59,9 +45,7 @@ void assertTensorValues(const TensorType &tensor, std::string expected)
 
 // --- Unit Tests
 
-void tensorMultiplicationTests()
-{
-
+void tensorMultiplicationTests() {
   std::cout << "Tensor Multiplication Tests:" << std::endl;
 
   tensor::tensor<int> a(4, 3, 4);
@@ -123,9 +107,7 @@ void tensorMultiplicationTests()
   printTensor(d2);
 }
 
-void sameTensorMultiplicationTests()
-{
-
+void sameTensorMultiplicationTests() {
   std::cout << "Same Tensor Multiplication Test:" << std::endl;
 
   tensor::tensor<int> a(3);
@@ -155,9 +137,7 @@ void sameTensorMultiplicationTests()
   std::cout << std::endl;
 }
 
-void traceTests()
-{
-
+void traceTests() {
   std::cout << "Trace Tests:" << std::endl;
 
   tensor::tensor<int> f(3, 3);
@@ -187,9 +167,7 @@ void traceTests()
   std::cout << std::endl;
 }
 
-void tensorAdditionTests()
-{
-
+void tensorAdditionTests() {
   std::cout << "Tensor Addition Tests:" << std::endl;
 
   tensor::tensor<int> a(4);
@@ -227,9 +205,7 @@ void tensorAdditionTests()
   std::cout << std::endl;
 }
 
-void operationConcatTests()
-{
-
+void operationConcatTests() {
   std::cout << "Tensor Operation Concat Tests:" << std::endl;
 
   tensor::tensor<int> a(2, 2);
@@ -289,9 +265,7 @@ void operationConcatTests()
   std::cout << std::endl;
 }
 
-void mixedConcatTests()
-{
-
+void mixedConcatTests() {
   std::cout << "Tensor Mixed Operation Concat Tests:" << std::endl;
 
   tensor::tensor<int> a(2, 2);
@@ -315,9 +289,7 @@ void mixedConcatTests()
   std::cout << std::endl;
 }
 
-void tensorConcatenation()
-{
-
+void tensorConcatenation() {
   std::cout << "Concatenatation example:" << std::endl;
 
   tensor::tensor<int> a(3);
@@ -338,9 +310,7 @@ void tensorConcatenation()
             << std::endl;
 }
 
-void KroneckerProduct()
-{
-
+void KroneckerProduct() {
   std::cout << "Kronecker example from wikipedia:" << std::endl;
 
   tensor::tensor<int> a(2, 2);
@@ -365,24 +335,27 @@ void KroneckerProduct()
 
   auto exp = a.ein("ij") * b.ein("kl");
 
-  tensor::tensor<int> d = exp.evaluate(); //.flatten(0,2);
+  tensor::tensor<int> d = exp.evaluate();  //.flatten(0,2);
 
   printTensor(d);
 
   std::cout << "The rank of the new tensor is " << d.get_rank() << std::endl;
 
-  std::cout << "The operation returns a tensor of rank 2*2, but the elements are multiplied correctly.\n"
+  std::cout
+      << "The operation returns a tensor of rank 2*2, but the elements are "
+         "multiplied correctly.\n"
 
-            << "If there wasn't a bug in the flatten operation one could easily implement a Kronecker product exploiting this functionality"
+      << "If there wasn't a bug in the flatten operation one could easily "
+         "implement a Kronecker product exploiting this functionality"
 
-            << std::endl
-            << std::endl;
+      << std::endl
+      << std::endl;
 }
 
-void numberOfIndexesCheck()
-{
-
-  std::cout << "This fails an assert (mismatch between number of indexes and dimensions)" << std::endl;
+void numberOfIndexesCheck() {
+  std::cout << "This fails an assert (mismatch between number of indexes and "
+               "dimensions)"
+            << std::endl;
 
   tensor::tensor<int> a(2, 2);
 
@@ -403,10 +376,10 @@ void numberOfIndexesCheck()
   std::cout << std::endl;
 }
 
-void invalidTrace()
-{
-
-  std::cout << "This fails an assert (dimensions of different size have same index)" << std::endl;
+void invalidTrace() {
+  std::cout
+      << "This fails an assert (dimensions of different size have same index)"
+      << std::endl;
 
   tensor::tensor<int> a(2, 3);
 
@@ -423,9 +396,7 @@ void invalidTrace()
   std::cout << std::endl;
 }
 
-void breaksComputation()
-{
-
+void breaksComputation() {
   std::cout << "This also should break the code" << std::endl;
 
   auto a = tensor::tensor<int>(3, 4);
@@ -442,10 +413,11 @@ void breaksComputation()
 
   printTensor(d);
 
-  std::cout << "Shouldn't work at all." << std::endl
-            << std::endl;
+  std::cout << "Shouldn't work at all." << std::endl << std::endl;
 
-  std::cout << "A combination of contraction and other operations with shared free indexes break the program" << std::endl;
+  std::cout << "A combination of contraction and other operations with shared "
+               "free indexes break the program"
+            << std::endl;
 
   a = tensor::tensor<int>(2, 2);
 
@@ -466,9 +438,7 @@ void breaksComputation()
 
 // --- Main
 
-int main()
-{
-
+int main() {
   tensorMultiplicationTests();
 
   sameTensorMultiplicationTests();

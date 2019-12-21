@@ -1,19 +1,24 @@
-Sandro Baccega(865024)
+# Advanced algorithms and programming methods - 2 [CM0470] - Prof. A. Torsello
 
-Arnaldo Santoro (822274)
+## Group:
 
-Due date: 23/12/2019
+Baccega Sandro (865024)
 
-# TODO:
+Santoro Arnaldo (822274)
+
+---
+
+# TODO
 
 - Finire Docs
-- Docs: usare sintassi latex
 - Controllare che il namespace di tensor_constant sia quello corretto
 - Creare i controlli a compile time per tensori con informazione statica
 
 ## REQUIREMENT SPECIFICATION
 
 ### Assignment 2: Einstein's notation
+
+### Due date: 23/12/2019
 
 Augment the tensor library with the ability to perform tensor operations using Einstein's notation.
 
@@ -66,11 +71,31 @@ auto exp = a["ii"];
 int c = exp.evaluate();
 ```
 
-#### Multiplication
+#### Addition, Subtraction and Multiplication
 
-#### Conversion
+There are 3 supported operations between tensors:
 
-#### Combinations
+- Addition
+
+  `a["ij"] + b["ik"]`
+
+- Subtraction
+
+  `a["ij"] - b["ik"]`
+
+- Multiplication
+
+  `a["ij"] * b["ik"]`
+
+To use one of these operations you can use the following syntax:
+
+```c++
+auto exp = a["ij"] * b["ik"];
+
+tensor::tensor<int> c = exp.evaluate();
+```
+
+<!-- Already done in the intro #### Conversion -->
 
 #### Generalized Kronecker Product
 
@@ -94,7 +119,7 @@ A definition of the _strategy pattern_ is a reusable solution that lets an algor
 
 The object `tensor_op` is forward-declared and consists of the _functor_ applying the algorithm.
 
-The following `struct`s are "functors" (in a broader sense) implementing the operations between two elements of type T, which are then placed in the specialized template of the definition for the `operator+`, and `operator*` respectively.
+The following structs are **"functors"** (in a broader sense) implementing the operations between two elements of type T, which are then placed in the specialized template of the definition for the `operator+`, `operator-` and `operator*` respectively.
 
 ## Bugs
 

@@ -277,7 +277,7 @@ void find_incongruences(const std::vector<char> &indices,
   std::vector<char> dummy_idx(calc_dummy_indices(indices));
   //    assert(indices.size() == width.size());
   for (auto idx : dummy_idx) {
-    int dim = 0;
+    size_t dim = 0;
     size_t i = 0;
     while (dim == 0 && i < width.size()) {
       if (indices[i] == idx) {
@@ -356,6 +356,10 @@ class tensor_op;
 template <typename T>
 struct op_sum {
   static T apply(T a, T b) { return a + b; }
+};
+template <typename T>
+struct op_sub {
+  static T apply(T a, T b) { return a - b; }
 };
 template <typename T>
 struct op_mult {
@@ -459,6 +463,11 @@ class tensor_constant {
   template <typename ST>
   tensor_op<T, tensor_constant<T>, ST, op_sum<T>> operator+(const ST &other) {
     return tensor_op<T, tensor_constant<T>, ST, op_sum<T>>(*this, other);
+  }
+
+  template <typename ST>
+  tensor_op<T, tensor_constant<T>, ST, op_sub<T>> operator-(const ST &other) {
+    return tensor_op<T, tensor_constant<T>, ST, op_sub<T>>(*this, other);
   }
 
   template <typename ST>

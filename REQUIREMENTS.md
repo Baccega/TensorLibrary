@@ -8,15 +8,15 @@ Augment the tensor library with the ability to perform tensor operations using E
 
 Einstein's notation, introduced in 1916 to simplify the notation used for general relativity, expresses tensor operations by rendering implicit the summation operations. According to this notation, repeated indexes in a tensorial expression are implicitly summed over, so the expression
 
-a_ijk b_j
+$a_{ijk}  b_{ij}$
 
 represents a rank 2 tensor c indexed by i and k such that
 
-c_ik = Σj a_ijk b_j
+$c_{ik} = \sum_{j} a_{ijk} b_{j}$
 
 The notation allows for simple contractions
 
-Tr(a) = a_ii
+Tr(a) = $a_{ii}$
 
 as well as additions (subtractions) and multiplications.
 

@@ -11,7 +11,7 @@ Santoro Arnaldo (822274)
 # TODO
 
 - Finire Docs
-- Controllare che il namespace di tensor_constant sia quello corretto
+- Controllare che il namespace di tensor_expr sia quello corretto
 - Creare i controlli a compile time per tensori con informazione statica
 
 ## BUILDING
@@ -30,14 +30,14 @@ make
 
 With this library you can represent a tensor in the Einstein notation with the following syntax:
 
-Tensor a_ij -> `a["ij"]`
+Tensor $a_{ij}$ becomes `a["ij"]`
 
 Where:
 
 - `a` is the tensor
 - `"ij"` are the selected indexes
 
-This will return a `tensor_constant` type, that can be evaluated into a Tensor or a value using the `evaluate()` method in the following way:
+This will return a `tensor_expr` type, that can be evaluated into a Tensor or a value using the `evaluate()` method in the following way:
 
 ```c++
 auto exp = a["i"] + b["i"];

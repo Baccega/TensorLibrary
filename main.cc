@@ -205,7 +205,7 @@ void tensorAdditionTests() {
   std::cout << std::endl;
 }
 
-void tensorSubtractionTests(){
+void tensorSubtractionTests() {
   std::cout << "Tensor Subtraction Tests:" << std::endl;
 
   tensor::tensor<int> a(4);
@@ -238,7 +238,6 @@ void tensorSubtractionTests(){
   assertTensorValues(c1, "0, \n");
 
   std::cout << std::endl;
-
 }
 
 void operationConcatTests() {
@@ -459,9 +458,10 @@ void breaksComputation() {
 
   b = tensor::tensor<int>(2, 2);
 
+  tensor::tensor_expr i = a["ii"];
   fill_tensor_i(a, 0);
 
-  fill_tensor_i(b, 0); 
+  fill_tensor_i(b, 0);
 
   auto exp3 = a["ii"] + b["ij"];
 
@@ -471,8 +471,6 @@ void breaksComputation() {
 
   std::cout << std::endl;
 }
-
-
 
 // --- Main
 

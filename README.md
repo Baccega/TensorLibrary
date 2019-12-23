@@ -8,13 +8,7 @@ Santoro Arnaldo (822274)
 
 ---
 
-# TODO
-
-- Finire Docs
-- Controllare che il namespace di tensor_expr sia quello corretto
-- Creare i controlli a compile time per tensori con informazione statica
-
-## BUILDING
+## BUILDING AND RUNNING
 
 ```bash
 mkdir build
@@ -23,6 +17,8 @@ cmake ../
 make
 ./tensor-library
 ```
+
+---
 
 ## USAGE
 
@@ -40,10 +36,12 @@ Where:
 This will return a `tensor_expr` type, that can be evaluated into a Tensor or a value using the `evaluate()` method in the following way:
 
 ```c++
-auto exp = a["i"] + b["i"];
+tensor::tensor_expr exp = a["i"] + b["i"];
 
 tensor::tensor<int> c = exp.evaluate();
 ```
+
+We encourage the use of the **auto** keyword to specify the type of the expression, since the type **tensor::tensor_expr** can be unconfortable to use.
 
 #### Trace
 
@@ -80,6 +78,7 @@ tensor::tensor<int> c = exp.evaluate();
 ```
 
 This expression fails an assert (unintentionally) at runtime:
+
 ```c++
 auto exp = a["ii"] * b["ij"];
 
@@ -87,6 +86,7 @@ tensor::tensor<int> c = exp.evaluate();
 ```
 
 This expression works but does not behave as intended:
+
 ```c++
 auto exp = a["iij"] * b["ij"];
 
@@ -103,11 +103,13 @@ This cannot be implemented at static time without static information on the dime
 
 #### Generalized Kronecker Product
 
-The operation OP between two tensors A and B or rank r and s with no common indexes returns a tensor of rank r\*s whose ranks' elements are the result of OP between each element of A and each element of the rank of B .
+The operation OP between two tensors $A$ and $B$ or rank r and s with no common indexes returns a tensor of rank r\*s whose ranks' elements are the result of OP between each element of $A$ and each element of the rank of $B$.
 
 This results similar to a Kronecker product which stores the results in different ranks of a tensor.
 
 If there wasn't a bug in the flatten operation one could easily implement a Kronecker product exploiting this functionality.
+
+---
 
 ## DESIGN
 
@@ -123,13 +125,19 @@ A definition of the _strategy pattern_ is a reusable solution that lets an algor
 
 The object `tensor_op` is forward-declared and consists of the _functor_ applying the algorithm.
 
-The following structs are **"functors"** (in a broader sense) implementing the operations between two elements of type T, which are then placed in the specialized template of the definition for the `operator+`, `operator-` and `operator*` respectively.
+The following structs are **"functors"** (in a broader sense) implementing the operations between two elements of type $T$, which are then placed in the specialized template of the definition for the `operator+`, `operator-` and `operator*` respectively.
 
 New operations by design easy to add.
 
+---
+
 ## Bugs And Missing Features
 
+A simple check that can be added is an assert that checks ranks in different tensors that should have same dimensions and shouldn't be able to compute.
+E.g. given a rank 2 tensor $A$ of dimension (2,2) and a rank 1 tensor $B$ of dimension (3), the following operation shouldn't be possible $A_{ij}+B_{i}$
+
 ### Combined operations
+
 A combination of contraction and other operations with shared free indexes break the program.
 This happes because no addition and multiplication operations were implemented outside the einstein summation, and because the evaluation of the trace happens before the other operation, effecively ereasing what was once a dummy index from computation.
 
@@ -137,11 +145,15 @@ To solvethe problem one should make an extensive use of the composite pattern to
 
 ### Static checks
 
-In our version no static checks were made, due to lack of skill in writing the code for the static tensor type.
+In our version no significant static checks were made, due to a lack of time caused by jobs and other courses projects.
+
 However we designed two possible solutions:
+
 - check that the number of indexes and the ranks match each other;
 - check that the type of indexes is compatible with each other.
-The solution we designed intended to implement static asserts only to check that the number of indexes of `tensor_expr` concides with the rank of the tensor; this choice won over the second one due to two factors:
+
+  The solution we designed intended to implement static asserts only to check that the number of indexes of `tensor_expr` concides with the rank of the tensor; this choice won over the second one due to two factors:
+
 - simplicity
 - efficiency
 - a case of "it's not a bug, it's a feature": no common indexes lead to the interesting effect of a "stacking tensor" operation, similar to Kronecker's operation.

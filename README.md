@@ -11,7 +11,7 @@ Santoro Arnaldo (822274)
 # TODO
 
 - Finire Docs
-- Controllare che il namespace di tensor_constant sia quello corretto
+- Controllare che il namespace di tensor_expr sia quello corretto
 - Creare i controlli a compile time per tensori con informazione statica
 
 ## BUILDING
@@ -37,7 +37,7 @@ Where:
 - `a` is the tensor
 - `"ij"` are the selected indexes
 
-This will return a `tensor_constant` type, that can be evaluated into a Tensor or a value using the `evaluate()` method in the following way:
+This will return a  tensor_expr` type, that can be evaluated into a Tensor or a value using the `evaluate()` method in the following way:
 
 ```c++
 auto exp = a["i"] + b["i"];
@@ -79,6 +79,26 @@ auto exp = a["ij"] * b["ik"];
 tensor::tensor<int> c = exp.evaluate();
 ```
 
+This expression fails an assert (unintentionally) at runtime:
+```c++
+auto exp = a["ii"] * b["ij"];
+
+tensor::tensor<int> c = exp.evaluate();
+```
+
+This expression works but does not behave as intended:
+```c++
+auto exp = a["iij"] * b["ij"];
+
+tensor::tensor<int> c = exp.evaluate();
+```
+
+Using more (or less) indexes than needed by a tensor fails (intentionally) an assert at runtime.
+This could have been implemented at static time.
+
+Also all dummy indexes have to be used in ranks of the same dimensions or they fail a runtime assert.
+This cannot be implemented at static time without static information on the dimension of the ranks.
+
 <!-- Already done in the intro #### Conversion -->
 
 #### Generalized Kronecker Product
@@ -105,8 +125,23 @@ The object `tensor_op` is forward-declared and consists of the _functor_ applyin
 
 The following structs are **"functors"** (in a broader sense) implementing the operations between two elements of type T, which are then placed in the specialized template of the definition for the `operator+`, `operator-` and `operator*` respectively.
 
-## Bugs
+New operations by design easy to add.
 
+## Bugs And Missing Features
+
+### Combined operations
 A combination of contraction and other operations with shared free indexes break the program.
+This happes because no addition and multiplication operations were implemented outside the einstein summation, and because the evaluation of the trace happens before the other operation, effecively ereasing what was once a dummy index from computation.
 
-This happens because the tensors are evaluated right out when they are passed to objects.(...)
+To solvethe problem one should make an extensive use of the composite pattern to materialize the whole tree of the expression and handle the evaluation checking every index in the operation when the `evaluate` function is called; this delayed evaluation however is computationally expensive for the computer (or the compiler if implemented statically).
+
+### Static checks
+
+In our version no static checks were made, due to lack of skill in writing the code for the static tensor type.
+However we designed two possible solutions:
+- check that the number of indexes and the ranks match each other;
+- check that the type of indexes is compatible with each other.
+The solution we designed intended to implement static asserts only to check that the number of indexes of `tensor_expr` concides with the rank of the tensor; this choice won over the second one due to two factors:
+- simplicity
+- efficiency
+- a case of "it's not a bug, it's a feature": no common indexes lead to the interesting effect of a "stacking tensor" operation, similar to Kronecker's operation.

@@ -367,12 +367,12 @@ struct op_mult {
 };
 
 template <typename T>
-class tensor_constant {
+class tensor_expr {
  public:
   const tensor<T> &tensorRef;
   std::vector<char> indices;
 
-  tensor_constant(const tensor<T> &tensorRef, const std::vector<char> &indices)
+  tensor_expr(const tensor<T> &tensorRef, const std::vector<char> &indices)
       : tensorRef(tensorRef), indices(indices) {
     // fails assert if there are more or less indexes than dimension of the
     // tensor
@@ -461,18 +461,18 @@ class tensor_constant {
   }
 
   template <typename ST>
-  tensor_op<T, tensor_constant<T>, ST, op_sum<T>> operator+(const ST &other) {
-    return tensor_op<T, tensor_constant<T>, ST, op_sum<T>>(*this, other);
+  tensor_op<T, tensor_expr<T>, ST, op_sum<T>> operator+(const ST &other) {
+    return tensor_op<T, tensor_expr<T>, ST, op_sum<T>>(*this, other);
   }
 
   template <typename ST>
-  tensor_op<T, tensor_constant<T>, ST, op_sub<T>> operator-(const ST &other) {
-    return tensor_op<T, tensor_constant<T>, ST, op_sub<T>>(*this, other);
+  tensor_op<T, tensor_expr<T>, ST, op_sub<T>> operator-(const ST &other) {
+    return tensor_op<T, tensor_expr<T>, ST, op_sub<T>>(*this, other);
   }
 
   template <typename ST>
-  tensor_op<T, tensor_constant<T>, ST, op_mult<T>> operator*(const ST &other) {
-    return tensor_op<T, tensor_constant<T>, ST, op_mult<T>>(*this, other);
+  tensor_op<T, tensor_expr<T>, ST, op_mult<T>> operator*(const ST &other) {
+    return tensor_op<T, tensor_expr<T>, ST, op_mult<T>>(*this, other);
   }
 };
 
@@ -628,7 +628,6 @@ template <typename T>
 class tensor<T, dynamic> {
  public:
   
-
   // C-style constructor with explicit rank and pointer to array of dimensions
   // all other constructors are redirected to this one
   tensor(size_t rank, const size_t dimensions[])
@@ -659,7 +658,7 @@ class tensor<T, dynamic> {
   tensor(tensor<T, dynamic> &&X) = default;
   tensor<T, dynamic> &operator=(const tensor<T, dynamic> &X) = default;
   tensor<T, dynamic> &operator=(tensor<T, dynamic> &&X) = default;
-  // tensor<T, dynamic>& operator=(tensor_constant<T> exp){};
+  // tensor<T, dynamic>& operator=(tensor_expr<T> exp){};
   // all tensor types are friend
   // this are used by alien copy constructors, i.e. copy constructors copying
   // different tensor types.
@@ -676,8 +675,8 @@ class tensor<T, dynamic> {
   // rank accessor
   size_t get_rank() const { return width.size(); }
 
-  reserved::tensor_constant<T> operator[](const std::string &indices) {
-    return reserved::tensor_constant<T>(
+  reserved::tensor_expr<T> operator[](const std::string &indices) {
+    return reserved::tensor_expr<T>(
         *this, std::vector<char>(indices.begin(), indices.end()));
   }
 

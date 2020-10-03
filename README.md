@@ -20,7 +20,7 @@ make
 
 We made some changes to a Tensor Library that used Einstein's Notation by making it's operations distributed over multiple threads. This results in better performances when working on very large tensors. 
 
-We kept the the same API from the previous library, meaning that we only changed the internal behaviour of the einstein expressions assignment operator.
+We kept the the same API from the base library, meaning that we only changed the internal behaviour of the einstein expressions assignment operator.
 
 ```cpp
 tensor<size_t, rank<2>> t1(SIZE, SIZE), t2(SIZE, SIZE);

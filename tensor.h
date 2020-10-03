@@ -10,8 +10,8 @@
 #include <utility>
 #include <vector>
 
-#include "einstein.h"
 #include "tensor_fwd.h"
+#include "einstein.h"
 
 using namespace std::rel_ops;
 
@@ -280,13 +280,13 @@ class tensor<T, dynamic> {
   T& operator()(const size_t dimensions[]) const {
     const size_t rank = width.size();
     T* ptr = start_ptr;
-    for (int i = 0; i != rank; ++i) ptr += dimensions[i] * stride[i];
+    for (size_t i = 0; i != rank; ++i) ptr += dimensions[i] * stride[i];
     return *ptr;
   }
   T& at(const size_t dimensions[]) const {
     const size_t rank = width.size();
     T* ptr = start_ptr;
-    for (int i = 0; i != rank; ++i) {
+    for (size_t i = 0; i != rank; ++i) {
       assert(dimensions[i] < width[i]);
       ptr += dimensions[i] * stride[i];
     }

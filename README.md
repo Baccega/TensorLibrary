@@ -14,18 +14,22 @@ cd build
 cmake ../
 make
 ./tensor
+./einstein
 ```
 
 ---
 
 We made some changes to a Tensor Library that used Einstein's Notation by making it's operations distributed over multiple threads. This results in better performances when working on very large tensors. 
 
-We kept the the same API from the base library, meaning that we only changed the internal behaviour of the einstein expressions assignment operator.
+We introduced the `parallel` method to use instead of the assignment operator, for example:
 
 ```cpp
 tensor<size_t, rank<2>> t1(SIZE, SIZE), t2(SIZE, SIZE);
 
 auto i = index;
 auto j = index;
-t2(j, i) = t1(i, j);
+
+t2(j, i).parallel(t1(i, j));
+// Gives the same result as:
+// t2(j, i) = t1(i, j);
 ```

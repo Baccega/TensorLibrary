@@ -1,6 +1,11 @@
 #ifndef EINSTEIN
 #define EINSTEIN
 #include<map>
+#include<array>
+#include<vector>
+#include<thread>
+#include<cmath>
+#include<mutex>
 
 namespace Tensor {
 /*
@@ -106,15 +111,6 @@ template<unsigned head, unsigned...tail, class U> struct is_same_nonrepeat<Index
 };
 
 
-
-
-
-
-
-
-
-
-
 struct einstein_proxy;
 template<class T, class U> struct einstein_binary;
 template<class T, class U> struct einstein_multiplication;
@@ -129,6 +125,181 @@ struct index_data {
     size_t stride;
     bool repeated;
 };
+
+
+// Functor that forces the calculation logic to be ran in parallel
+template<typename ExpTypeA, typename ExpTypeB>
+class parallel {
+public:
+    parallel(
+        size_t start_index, size_t to_run,
+        ExpTypeA exp,
+        ExpTypeB x)
+      : to_run(to_run), start_index(start_index),
+        exp(exp), x(x) {}
+
+    void operator() (std::mutex &write_mutex) {
+        // Aligning to thread start index
+        exp.seek(start_index);
+        x.seek(start_index);
+
+        while(!exp.end() && to_run > 0) {
+            {
+                // Acquiring lock for writing on tensor
+                std::lock_guard<std::mutex> write_guard(write_mutex);
+                exp.eval() += x.eval();
+            }
+            exp.next();
+            x.next();
+            to_run--;
+        }
+    }
+
+private:
+    size_t to_run;
+    size_t start_index;
+    ExpTypeA exp;
+    ExpTypeB x;
+};
+
+
+// Operation executors manager (Load balancing)
+template<typename ExpTypeA, typename ExpTypeB>
+class operation_executor_pool {
+public:
+    operation_executor_pool(
+        unsigned int previous_count,
+        ExpTypeA& exp,
+        ExpTypeB& x) {
+
+        // Count the number of items to calculate
+        size_t items_count = 0;
+        for (size_t i = 0; i < exp.widths.size(); i++) {
+            if (i == 0) {
+                items_count = exp.widths[i];
+            } else {
+                items_count *= exp.widths[i];
+            }
+        }
+
+        size_t elements_per_executor = floor(items_count / previous_count);
+        size_t so_far = 0;
+        for (size_t i = 0; i < previous_count; i++) {
+            if (i == previous_count - 1) {
+                elements_per_executor = items_count - so_far;
+            }
+
+            executors.push_back(
+                parallel<ExpTypeA, ExpTypeB>(
+                    so_far,
+                    elements_per_executor,
+                    exp,
+                    x
+                )
+            );
+
+            so_far += elements_per_executor;
+        }
+    }
+
+    // Run the threads and wait for their completition
+    void run() {
+        std::vector<std::thread> threads;
+        for (auto &&ex : executors) {
+            threads.push_back(std::thread(std::ref(ex), std::ref(write_mutex)));
+        }
+
+        for (auto &&t : threads) {
+            t.join();
+        }
+    }
+
+private:
+    std::vector<parallel<ExpTypeA, ExpTypeB>> executors;
+
+    // Mutex necessary in order to avoid race conditions on += assignment
+    std::mutex write_mutex;
+};
+
+
+// Executor that fills a range with zeroes
+template <typename T>
+class cleaner {
+public:
+    cleaner(size_t start_index, size_t to_run, T* ptr)
+        : start_index(start_index), to_run(to_run), ptr(ptr) {}
+    
+    void operator() (){
+        while (to_run > 0) {
+            ptr[start_index] = 0;
+
+            to_run--;
+            start_index++;
+        }
+    }
+
+private:
+    size_t start_index;
+    size_t to_run;
+    T* ptr;
+};
+
+// Cleaner executors manager (Load balancing)
+template<typename T>
+class cleaner_executors_pool {
+public:
+    cleaner_executors_pool(
+        unsigned int previous_count,
+        std::vector<size_t> widths,
+        T* ptr) {
+
+        // Count the number of items to calculate
+        size_t items_count = 0;
+        for (size_t i = 0; i < widths.size(); i++) {
+            if (i == 0) {
+                items_count = widths[i];
+            } else {
+                items_count *= widths[i];
+            }
+        }
+
+        size_t elements_per_executor = floor(items_count / previous_count);
+        size_t so_far = 0;
+        for (size_t i = 0; i < previous_count; i++) {
+            if (i == previous_count - 1) {
+                elements_per_executor = items_count - so_far;
+            }
+
+            executors.push_back(
+                cleaner<T>(
+                    so_far,
+                    elements_per_executor,
+                    ptr
+                )
+            );
+
+            so_far += elements_per_executor;
+        }
+    }
+
+    // Run the threads and wait for their completition
+    void run() {
+        std::vector<std::thread> threads;
+        for (auto &&ex : executors) {
+            threads.push_back(std::thread(std::ref(ex)));
+        }
+
+        for (auto &&t : threads) {
+            t.join();
+        }
+    }
+
+private:
+    std::vector<cleaner<T>> executors;
+};
+
+
+
 
 /* Proxy class for a tensor with Einstein indices applied
  * can be both l-value and r-value. operator = triggers evaluation and accumulation
@@ -168,12 +339,46 @@ public:
         setup();
         x.setup();
 
-
         while(!end()) {
             eval() += x.eval();
             next();
             x.next();
         }
+
+        return *this;
+    }
+
+    // Parallel assignment
+    template<class T2, class TYPE2>
+    einstein_expression<T,dynamic>& parallel(
+        einstein_expression<T2,dynamic,TYPE2>&& x, int n_threads = std::thread::hardware_concurrency()) {
+        std::map<Index,index_data>& x_index_map=x.get_index_map();
+        assert(repeated_num==0);
+
+        // set all entries of dest tensor to 0
+        setup();
+
+        // Create a pool of cleaner executors, starts them and wait for finish
+        auto cleaner_pool = cleaner_executors_pool<T>(n_threads, widths, current_ptr);
+        cleaner_pool.run();
+
+        //align index maps + sanity checking
+        for (auto i=x_index_map.begin(); i!=x_index_map.end(); ++i) {
+            auto j=index_map.find(i->first);
+            if (i->second.repeated) {
+                assert(j==index_map.end());
+                add_index(i->first, i->second.width);
+            } else {
+                assert(j!=index_map.end());
+            }
+        }
+        assert(index_map.size()==x_index_map.size());
+        setup();
+        x.setup();
+
+        // Create a pool of operation executors, starts them and wait for finish
+        auto operation_pool = operation_executor_pool(n_threads, *this, x);
+        operation_pool.run();
 
         return *this;
     }
@@ -212,6 +417,8 @@ public:
 
     template<typename T2, class type2> friend class tensor;
     template<typename T2, class IDX2, class type2> friend class einstein_expression;
+    template<typename, typename> friend class parallel;
+    template<typename, typename> friend class operation_executor_pool;
 
 protected:
 
@@ -252,6 +459,27 @@ protected:
             --index;
             ++idxs[index];
             current_ptr += strides[index];
+        }
+    }
+
+    // Go to a specific position
+    void seek(size_t position) {
+        unsigned index = idxs.size()-1;
+        idxs[index] += position;
+        current_ptr += strides[index] * position;
+
+        while(idxs[index]>=widths[index] && index>0) {
+            size_t times = 0;
+
+            while(idxs[index]>=widths[index]) {
+                idxs[index] -= widths[index];
+                current_ptr -= widths[index] * strides[index];
+                times++;
+            }
+
+            --index;
+            idxs[index] += times;
+            current_ptr += times * strides[index];
         }
     }
 
@@ -340,6 +568,8 @@ public:
 
 
     template<typename T2, class IDX2, class type2> friend class einstein_expression;
+    template<typename, typename> friend class parallel;
+    template<typename, typename> friend class operation_executor_pool;
 
 protected:
     void add_index(Index idx, unsigned width, unsigned stride=0) {
@@ -373,6 +603,11 @@ protected:
     void next() {
         exp1.next();
         exp2.next();
+    }
+
+    void seek(size_t position) {
+        exp1.seek(position);
+        exp2.seek(position);
     }
 
     T eval() { return exp1.eval() * exp2.eval(); }
@@ -458,6 +693,8 @@ public:
     }
 
     template<typename T2, class IDX2, class type2> friend class einstein_expression;
+    template<typename, typename> friend class parallel;
+    template<typename, typename> friend class operation_executor_pool;
 
 protected:
     void add_index(Index idx, unsigned width, unsigned stride=0) {
@@ -491,6 +728,11 @@ protected:
     void next() {
         exp1.next();
         exp2.next();
+    }
+
+    void seek(size_t position) {
+        exp1.seek(position);
+        exp2.seek(position);
     }
 
     std::map<Index,index_data>& get_index_map() { return index_map; }
@@ -548,6 +790,8 @@ public:
     }
 
     template<typename T2, class IDX2, class type2> friend class einstein_expression;
+    template<typename, typename> friend class parallel;
+    template<typename, typename> friend class operation_executor_pool;
 
 protected:
 
@@ -573,6 +817,8 @@ public:
     }
 
     template<typename T2, class IDX2, class type2> friend class einstein_expression;
+    template<typename, typename> friend class parallel;
+    template<typename, typename> friend class operation_executor_pool;
 
 protected:
 
@@ -597,6 +843,15 @@ public:
         static_assert(is_same_nonrepeat<Index_Set<ids...>,typename non_repeat<Index_Set<ids...>>::set>::value, "Repeated indices in lvalue Einstein expression");
         static_assert(is_same_nonrepeat<Index_Set<ids...>, typename non_repeat<Index_Set<ids2...>>::set>::value, "Non-repeated indices in lvalue and rvalue Einstein expressions are not the same");
         einstein_expression<T,dynamic,einstein_proxy>::operator = (static_cast<einstein_expression<T2,dynamic,TYPE2>&&>(x));
+        return *this;
+    }
+
+    template<class T2, class TYPE2, unsigned...ids2>
+    einstein_expression<T,Index_Set<ids...>,einstein_proxy>& parallel(
+        einstein_expression<T2,Index_Set<ids2...>,TYPE2>&& x, int n_threads = std::thread::hardware_concurrency()) {
+        static_assert(is_same_nonrepeat<Index_Set<ids...>,typename non_repeat<Index_Set<ids...>>::set>::value, "Repeated indices in lvalue Einstein expression");
+        static_assert(is_same_nonrepeat<Index_Set<ids...>, typename non_repeat<Index_Set<ids2...>>::set>::value, "Non-repeated indices in lvalue and rvalue Einstein expressions are not the same");
+        einstein_expression<T,dynamic,einstein_proxy>::parallel (static_cast<einstein_expression<T2,dynamic,TYPE2>&&>(x), n_threads);
         return *this;
     }
 };

@@ -127,6 +127,82 @@ struct index_data {
 };
 
 
+// Executor that fills a range with zeroes
+template <typename T>
+class cleaner {
+public:
+    cleaner(size_t start_index, size_t to_run, T* ptr)
+        : start_index(start_index), to_run(to_run), ptr(ptr) {}
+    
+    void operator() (){
+        while (to_run > 0) {
+            ptr[start_index] = 0;
+
+            to_run--;
+            start_index++;
+        }
+    }
+
+private:
+    size_t start_index;
+    size_t to_run;
+    T* ptr;
+};
+
+// Cleaner executors manager (Load balancing)
+template<typename T>
+class cleaner_executors_pool {
+public:
+    cleaner_executors_pool(
+        unsigned int previous_count,
+        std::vector<size_t> widths,
+        T* ptr) {
+
+        // Count the number of items to calculate
+        size_t items_count = 0;
+        for (size_t i = 0; i < widths.size(); i++) {
+            if (i == 0) {
+                items_count = widths[i];
+            } else {
+                items_count *= widths[i];
+            }
+        }
+
+        size_t elements_per_executor = floor(items_count / previous_count);
+        size_t so_far = 0;
+        for (size_t i = 0; i < previous_count; i++) {
+            if (i == previous_count - 1) {
+                elements_per_executor = items_count - so_far;
+            }
+
+            executors.push_back(
+                cleaner<T>(
+                    so_far,
+                    elements_per_executor,
+                    ptr
+                )
+            );
+
+            so_far += elements_per_executor;
+        }
+    }
+
+    // Run the threads and wait for their completition
+    void run() {
+        std::vector<std::thread> threads;
+        for (auto &&executor : executors) {
+            threads.push_back(std::thread(std::ref(executor)));
+        }
+
+        for (auto &&thread : threads) {
+            thread.join();
+        }
+    }
+
+private:
+    std::vector<cleaner<T>> executors;
+};
+
 // Functor that forces the calculation logic to be ran in parallel
 template<typename ExpTypeA, typename ExpTypeB>
 class parallel {
@@ -205,12 +281,12 @@ public:
     // Run the threads and wait for their completition
     void run() {
         std::vector<std::thread> threads;
-        for (auto &&ex : executors) {
-            threads.push_back(std::thread(std::ref(ex), std::ref(write_mutex)));
+        for (auto &&executor : executors) {
+            threads.push_back(std::thread(std::ref(executor), std::ref(write_mutex)));
         }
 
-        for (auto &&t : threads) {
-            t.join();
+        for (auto &&thread : threads) {
+            thread.join();
         }
     }
 
@@ -220,86 +296,6 @@ private:
     // Mutex necessary in order to avoid race conditions on += assignment
     std::mutex write_mutex;
 };
-
-
-// Executor that fills a range with zeroes
-template <typename T>
-class cleaner {
-public:
-    cleaner(size_t start_index, size_t to_run, T* ptr)
-        : start_index(start_index), to_run(to_run), ptr(ptr) {}
-    
-    void operator() (){
-        while (to_run > 0) {
-            ptr[start_index] = 0;
-
-            to_run--;
-            start_index++;
-        }
-    }
-
-private:
-    size_t start_index;
-    size_t to_run;
-    T* ptr;
-};
-
-// Cleaner executors manager (Load balancing)
-template<typename T>
-class cleaner_executors_pool {
-public:
-    cleaner_executors_pool(
-        unsigned int previous_count,
-        std::vector<size_t> widths,
-        T* ptr) {
-
-        // Count the number of items to calculate
-        size_t items_count = 0;
-        for (size_t i = 0; i < widths.size(); i++) {
-            if (i == 0) {
-                items_count = widths[i];
-            } else {
-                items_count *= widths[i];
-            }
-        }
-
-        size_t elements_per_executor = floor(items_count / previous_count);
-        size_t so_far = 0;
-        for (size_t i = 0; i < previous_count; i++) {
-            if (i == previous_count - 1) {
-                elements_per_executor = items_count - so_far;
-            }
-
-            executors.push_back(
-                cleaner<T>(
-                    so_far,
-                    elements_per_executor,
-                    ptr
-                )
-            );
-
-            so_far += elements_per_executor;
-        }
-    }
-
-    // Run the threads and wait for their completition
-    void run() {
-        std::vector<std::thread> threads;
-        for (auto &&ex : executors) {
-            threads.push_back(std::thread(std::ref(ex)));
-        }
-
-        for (auto &&t : threads) {
-            t.join();
-        }
-    }
-
-private:
-    std::vector<cleaner<T>> executors;
-};
-
-
-
 
 /* Proxy class for a tensor with Einstein indices applied
  * can be both l-value and r-value. operator = triggers evaluation and accumulation

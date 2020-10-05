@@ -24,7 +24,7 @@ We made some changes to a Tensor Library that used Einstein's Notation by making
 We introduced the `parallel` method to use instead of the assignment operator, for example:
 
 ```cpp
-tensor<size_t, rank<2>> t1(SIZE, SIZE), t2(SIZE, SIZE);
+tensor<size_t, rank<2>> t1(TENSOR_SIZE, TENSOR_SIZE), t2(TENSOR_SIZE, TENSOR_SIZE);
 
 auto i = index;
 auto j = index;
